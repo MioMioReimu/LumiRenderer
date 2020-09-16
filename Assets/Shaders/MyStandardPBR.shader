@@ -77,7 +77,7 @@
             }
 
             inline float GSubSchlickGGX(float nv, float k) {
-                return nv / (nv * (1.0 - k) + k);
+                return nv / lerp(nv, 1.0, k);
             }
 
             inline float GSchlickGGX(float nv, float nl, float k) {
@@ -103,7 +103,7 @@
                 //直接光照部分结果
                 float3 specColor = specular * light.color * brdf.nl * UNITY_PI;
                 float3 diffColor = kd * brdf.albedo * light.color * brdf.nl;
-                return specular;// specColor + diffColor;
+                return specColor + diffColor;
             }
             
             inline void InitBRDF(float3 normal, float3 lightDir, float3 viewDir, inout brdf_data brdf) {
@@ -113,7 +113,7 @@
                 brdf.nv = max(saturate(dot(normal, viewDir)), 0.00001);
                 brdf.vh = max(saturate(dot(viewDir, halfvl)), 0.00001);
                 brdf.lh = max(saturate(dot(lightDir, halfvl)), 0.00001);
-                brdf.nh = max(saturate(dot(lightDir, halfvl)), 0.00001);
+                brdf.nh = max(saturate(dot(normal, halfvl)), 0.00001);
             }
 
             inline void ConvertFromMetallicStyle(float3 albedo, float metallic, inout brdf_data brdf) {
@@ -121,8 +121,8 @@
 
                 brdf.frenel0 = f0;
                 brdf.glossiness = (1.0 - metallic) * unity_ColorSpaceDielectricSpec.a;
-                brdf.albedo = /*brdf.glossiness **/ albedo;
-                brdf.roughness = 1 - _Metallic;
+                brdf.albedo = brdf.glossiness * albedo;
+                brdf.roughness = 1 - _Smoothness;
                 brdf.roughness *= brdf.roughness;
             }
 
